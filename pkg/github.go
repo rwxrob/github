@@ -31,7 +31,7 @@ func init() {
 	}
 }
 
-// APIVersion is the default used when returning the APIURL.
+// APIVersion is the default used when returning the API.
 var APIVersion = "v3"
 
 // ------------------------------ Client ------------------------------
@@ -59,13 +59,13 @@ type Client interface {
 	SetAPIVersion(a string)
 	Repo(id string) (map[string]any, error)
 
-	// APIURL returns a full URL string for the given Host based on
+	// API returns a full URL string for the given Host based on
 	// inferred usage of GitHub Enterprise:
 	//
 	//     Host == github.com         -> https://api.github.com/
 	//     Host == github.example.com -> https://github.example.com/api/v3
 	//
-	APIURL() string
+	API() string
 }
 
 // NewClient returns a new struct pointer fulfilling the Client
@@ -87,48 +87,39 @@ func (c *client) SetHost(a string)       { c.host = a }
 func (c *client) APIVersion() string     { return c.apivers }
 func (c *client) SetAPIVersion(a string) { c.apivers = a }
 
-func (c *client) Repo(id string) (map[string]any, error) {
-	data := map[string]any{}
-	url := c.APIURL(`repos/` + id)
-	req := web.Req{URL: url, Data: data}
-	if err := req.Submit(); err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func (c *client) APIURL(suf string) string {
+func (c *client) API(suf string) string {
 	if c.host == "github.com" {
 		return "https://api.github.com/" + suf
 	}
 	return fmt.Sprintf("https://%v/api/%v/%v", c.host, c.apivers, suf)
 }
 
-func (c *client) Latest(is string) string {
-	return ""
+func (c *client) Repo(id string) (map[string]any, error) {
+	d := map[string]any{}
+	req := web.Req{U: c.API(`repos/` + id), D: d}
+	if err := req.Submit(); err != nil {
+		return nil, err
+	}
+	return d, nil
 }
 
-// --------------------------- API Functions --------------------------
-
-/*
-
-// LatestURL takes a GitHub git repo source URL and converts into one
-// pointing at the API URL that returns JSON data about the latest
-// release.
-func LatestURL(src string) string {
-	var url string
-https://api.github.com/repos/twitchdev/twitch-cli/releases/latest | jq -r .name)
-curl -sSL "https://github.com/twitchdev/twitch-cli/releases/download/${latest}/twitch-cli_${latest#v}_Linux_x86_64.tar.gz" -o tarbomb.tgz
-	return url
+func (c *client) Latest(id string) (string, error) {
+	d := &struct{ Name string }{}
+	req := web.Req{U: c.API(`repos/` + id + `/releases/latest`), D: d}
+	if err := req.Submit(); err != nil {
+		return "", err
+	}
+	return d.Name, nil
 }
 
-// LatestVersion returns the version (name) of the latest release from
-// the GitHub repo at the give source URL. Only `git@` and `http://`
-// source URLs are currently supported (but full repo source URL
-// support, including ssh, is planned).
-func LatestVersion(src string) string {
-	var url string
-	return url
+// --------------------------- DefaultClient --------------------------
 
+var DefaultClient = NewClient()
+
+func Repo(id string) (map[string]any, error) {
+	return DefaultClient.Repo(id)
 }
-*/
+
+func Latest(id string) (string, error) {
+	return DefaultClient.Latest(id)
+}
