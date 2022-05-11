@@ -3,7 +3,7 @@ package github_test
 import (
 	"fmt"
 
-	github "github.com/rwxrob/github/pkg"
+	github "github.com/rwxrob/github"
 )
 
 func ExampleClient_defaults() {
@@ -50,14 +50,14 @@ func ExampleRepo() {
 }
 
 func ExampleLatest() {
-	ver, err := github.Latest(`rwxrob/z`)
+	ver, err := github.Latest(`docker/compose`)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Println(ver[0:2])
 	// Output:
-	// v0
+	// v2
 }
 
 /*

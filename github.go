@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"os"
 
-	web "github.com/rwxrob/web/pkg"
+	web "github.com/rwxrob/web"
 )
 
 // -------------------------- Package Globals -------------------------
